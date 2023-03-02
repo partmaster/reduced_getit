@@ -21,8 +21,7 @@ Widget wrapWithConsumer<S, P>({
       transformer: transformer,
     );
 
-class _WrapWithConsumer<S, P> extends StatelessWidget
-    with GetItMixin {
+class _WrapWithConsumer<S, P> extends StatelessWidget with GetItMixin {
   final ReducedTransformer<S, P> transformer;
   final ReducedWidgetBuilder<P> builder;
 
@@ -35,8 +34,7 @@ class _WrapWithConsumer<S, P> extends StatelessWidget
   @override
   Widget build(context) => builder(
         props: watchOnly(
-          (ValueNotifier<S> notifier) =>
-              transformer(notifier.reducible),
+          (ValueNotifier<S> notifier) => transformer(notifier.reducible),
         ),
       );
 }
