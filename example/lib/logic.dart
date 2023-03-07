@@ -14,9 +14,9 @@ class Props {
   final Callable<void> onPressed;
 }
 
-Props transformer(Reducible<int> reducible) => Props(
-      counterText: '${reducible.state}',
-      onPressed: CallableAdapter(reducible, Incrementer()),
+Props transformer(ReducedStore<int> store) => Props(
+      counterText: '${store.state}',
+      onPressed: CallableAdapter(store, Incrementer()),
     );
 
 Widget builder({Key? key, required Props props}) => Scaffold(

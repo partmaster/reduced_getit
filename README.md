@@ -7,24 +7,24 @@
 
 Implementation of the 'reduced' API for the 'GetIt' state management framework with following features:
 
-1. Implementation of the ```Reducible``` interface 
+1. Implementation of the ```ReducedStore``` interface 
 2. Register a state for management.
 3. Trigger a rebuild on widgets selectively after a state change.
 
 ## Features
 
-#### 1. Implementation of the ```Reducible``` interface
+#### 1. Implementation of the ```ReducedStore``` interface
 
 ```dart
-extension ReducibleValueNotifier<S> on ValueNotifier<S> {
+extension ReducedValueNotifier<S> on ValueNotifier<S> {
   S getState() => value;
 
   void reduce(Reducer<S> reducer) {
     value = reducer(value);
   }
 
-  Reducible<S> get reducible =>
-      ReducibleProxy(getState, reduce, this);
+  ReducedStore<S> get proxy =>
+      ReducedStoreProxy(getState, reduce, this);
 }
 ```
 
@@ -40,33 +40,20 @@ void registerState<S>({required S initialState}) =>
 #### 3. Trigger a rebuild on widgets selectively after a state change.
 
 ```dart
-Widget wrapWithConsumer<S, P>({
-  required ReducedTransformer<S, P> transformer,
-  required ReducedWidgetBuilder<P> builder,
-}) =>
-    _WrapWithConsumer(
-      builder: builder,
-      transformer: transformer,
-    );
-```dart
-
-````
-class _WrapWithConsumer<S, P> extends StatelessWidget
-    with GetItMixin {
-  final ReducedTransformer<S, P> transformer;
-  final ReducedWidgetBuilder<P> builder;
-
-  _WrapWithConsumer({
+class ReducedConsumer<S, P> extends StatelessWidget with GetItMixin {
+  ReducedConsumer({
     super.key,
     required this.transformer,
     required this.builder,
   });
 
+  final ReducedTransformer<S, P> transformer;
+  final ReducedWidgetBuilder<P> builder;
+
   @override
-  Widget build(context) => builder(
+  Widget build(BuildContext context) => builder(
         props: watchOnly(
-          (ValueNotifier<S> notifier) =>
-              transformer(notifier.reducible),
+          (ValueNotifier<S> notifier) => transformer(notifier.proxy),
         ),
       );
 }
@@ -78,8 +65,8 @@ In the pubspec.yaml add dependencies on the package 'reduced' and on the package
 
 ```
 dependencies:
-  reduced: ^0.1.0
-  reduced_getit: ^0.1.0
+  reduced: 0.2.1
+  reduced_getit: 0.2.1
 ```
 
 Import package 'reduced' to implement the logic.
@@ -105,6 +92,7 @@ import 'package:flutter/material.dart';
 import 'package:reduced/reduced.dart';
 
 class Incrementer extends Reducer<int> {
+  @override
   int call(int state) => state + 1;
 }
 
@@ -114,13 +102,13 @@ class Props {
   final Callable<void> onPressed;
 }
 
-Props transformer(Reducible<int> reducible) => Props(
-      counterText: '${reducible.state}',
-      onPressed: CallableAdapter(reducible, Incrementer()),
+Props transformer(ReducedStore<int> store) => Props(
+      counterText: '${store.state}',
+      onPressed: CallableAdapter(store, Incrementer()),
     );
 
 Widget builder({Key? key, required Props props}) => Scaffold(
-      appBar: AppBar(title: Text('reduced_getit example')),
+      appBar: AppBar(title: const Text('reduced_getit example')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -128,7 +116,7 @@ Widget builder({Key? key, required Props props}) => Scaffold(
             const Text(
               'You have pushed the button this many times:',
             ),
-            Text('${props.counterText}'),
+            Text(props.counterText),
           ],
         ),
       ),
@@ -160,11 +148,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
         theme: ThemeData(primarySwatch: Colors.blue),
-        home: Builder(
-          builder: (context) => wrapWithConsumer(
-            transformer: transformer,
-            builder: builder,
-          ),
+        home: ReducedConsumer(
+          transformer: transformer,
+          builder: builder,
         ),
       );
 }
