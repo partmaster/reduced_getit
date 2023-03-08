@@ -31,10 +31,16 @@ extension ReducedValueNotifier<S> on ValueNotifier<S> {
 #### 2. Register a state for management.
 
 ```dart
-void registerState<S>({required S initialState}) =>
-    GetIt.instance.registerSingleton(
-      ValueNotifier<S>(initialState),
-    );
+Object registerState<S>(S initialState) {
+  final instance = ValueNotifier(initialState);
+  GetIt.instance.registerSingleton(instance);
+  return instance;
+}
+```
+
+```dart
+FutureOr unregisterState(Object instance) =>
+    GetIt.instance.unregister(instance: instance);
 ```
 
 #### 3. Trigger a rebuild on widgets selectively after a state change.
@@ -52,7 +58,7 @@ class ReducedConsumer<S, P> extends StatelessWidget with GetItMixin {
 
   @override
   Widget build(BuildContext context) => builder(
-        props: watchOnly(
+        props: watchOnly<ValueNotifier<S>, P>(
           (ValueNotifier<S> notifier) => transformer(notifier.proxy),
         ),
       );
@@ -138,7 +144,7 @@ import 'package:reduced_getit/reduced_getit.dart';
 import 'logic.dart';
 
 void main() {
-  registerState(initialState: 0);
+  registerState(0);
   runApp(const MyApp());
 }
 
