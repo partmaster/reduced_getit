@@ -4,7 +4,7 @@ import 'package:reduced/reduced.dart';
 
 import 'package:reduced_getit/reduced_getit.dart';
 
-class Incrementer extends Reducer<int> {
+class CounterIncremented extends Event<int> {
   @override
   int call(int state) => state + 1;
 }
@@ -20,9 +20,9 @@ void main() {
     expect(objectUnderTest.state, 1);
   });
 
-  test('ValueNotifier reduce', () async {
+  test('ValueNotifier dispatch', () async {
     final objectUnderTest = ValueNotifier(0).proxy;
-    objectUnderTest.reduce(Incrementer());
+    objectUnderTest.dispatch(CounterIncremented());
     expect(objectUnderTest.state, 1);
   });
 }

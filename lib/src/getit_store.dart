@@ -7,9 +7,7 @@ import 'package:reduced/reduced.dart';
 extension ReducedValueNotifier<S> on ValueNotifier<S> {
   S getState() => value;
 
-  void reduce(Reducer<S> reducer) {
-    value = reducer(value);
-  }
+  void dispatch(Event<S> event) => value = event(value);
 
-  ReducedStore<S> get proxy => ReducedStoreProxy(getState, reduce, this);
+  ReducedStore<S> get proxy => ReducedStoreProxy(getState, dispatch, this);
 }
