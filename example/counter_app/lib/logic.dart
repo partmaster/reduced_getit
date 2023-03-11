@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:reduced/reduced.dart';
 
-class Incrementer extends Reducer<int> {
+class Incrementer extends Event<int> {
   @override
   int call(int state) => state + 1;
 }
