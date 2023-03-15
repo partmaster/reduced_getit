@@ -7,24 +7,21 @@
 
 Implementation of the 'reduced' API for the 'GetIt' state management framework with following features:
 
-1. Implementation of the ```ReducedStore``` interface 
+1. Implementation of the ```Store``` interface 
 2. Register a state for management.
 3. Trigger a rebuild on widgets selectively after a state change.
 
 ## Features
 
-#### 1. Implementation of the ```ReducedStore``` interface
+#### 1. Implementation of the ```Store``` interface
 
 ```dart
 extension ReducedValueNotifier<S> on ValueNotifier<S> {
   S getState() => value;
 
-  void reduce(Reducer<S> reducer) {
-    value = reducer(value);
-  }
+  void process(Event<S> event) => value = event(value);
 
-  ReducedStore<S> get proxy =>
-      ReducedStoreProxy(getState, reduce, this);
+  Store<S> get proxy => StoreProxy(getState, process, this);
 }
 ```
 
@@ -49,17 +46,20 @@ FutureOr unregisterState(Object instance) =>
 class ReducedConsumer<S, P> extends StatelessWidget with GetItMixin {
   ReducedConsumer({
     super.key,
-    required this.transformer,
+    required this.mapper,
     required this.builder,
   });
 
-  final ReducedTransformer<S, P> transformer;
-  final ReducedWidgetBuilder<P> builder;
+  final StateToPropsMapper<S, P> mapper;
+  final WidgetFromPropsBuilder<P> builder;
 
   @override
   Widget build(BuildContext context) => builder(
         props: watchOnly<ValueNotifier<S>, P>(
-          (ValueNotifier<S> notifier) => transformer(notifier.proxy),
+          (ValueNotifier<S> notifier) => mapper(
+            notifier.proxy.state,
+            notifier.proxy,
+          ),
         ),
       );
 }
@@ -71,8 +71,11 @@ In the pubspec.yaml add dependencies on the package 'reduced' and on the package
 
 ```
 dependencies:
-  reduced: 0.2.1
-  reduced_getit: 0.2.1
+  reduced: 0.4.0
+  reduced_getit: 
+    git:
+      url: https://github.com/partmaster/reduced_getit.git
+      ref: v0.4.0
 ```
 
 Import package 'reduced' to implement the logic.
@@ -96,42 +99,56 @@ Implementation of the counter demo app logic with the 'reduced' API without furt
 
 import 'package:flutter/material.dart';
 import 'package:reduced/reduced.dart';
+import 'package:reduced/callbacks.dart';
 
-class Incrementer extends Reducer<int> {
+class CounterIncremented extends Event<int> {
   @override
   int call(int state) => state + 1;
 }
 
 class Props {
-  Props({required this.counterText, required this.onPressed});
+  const Props({required this.counterText, required this.onPressed});
+
   final String counterText;
-  final Callable<void> onPressed;
+  final VoidCallable onPressed;
 }
 
-Props transformer(ReducedStore<int> store) => Props(
-      counterText: '${store.state}',
-      onPressed: CallableAdapter(store, Incrementer()),
-    );
+class PropsMapper extends Props {
+  PropsMapper(int state, EventProcessor<int> processor)
+      : super(
+          counterText: '$state',
+          onPressed: EventCarrier(processor, CounterIncremented()),
+        );
+}
 
-Widget builder({Key? key, required Props props}) => Scaffold(
-      appBar: AppBar(title: const Text('reduced_getit example')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(props.counterText),
-          ],
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({super.key, required this.props});
+
+  final Props props;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(
+          title: const Text('reduced_getit example'),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: props.onPressed,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-    );
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Text(
+                'You have pushed the button this many times:',
+              ),
+              Text(props.counterText),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: props.onPressed,
+          tooltip: 'Increment',
+          child: const Icon(Icons.add),
+        ),
+      );
+}
 ```
 
 Finished counter demo app using logic.dart and 'reduced_getit' package:
@@ -155,8 +172,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
         theme: ThemeData(primarySwatch: Colors.blue),
         home: ReducedConsumer(
-          transformer: transformer,
-          builder: builder,
+          mapper: PropsMapper.new,
+          builder: MyHomePage.new,
         ),
       );
 }

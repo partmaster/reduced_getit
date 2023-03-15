@@ -20,9 +20,9 @@ void main() {
     expect(objectUnderTest.state, 1);
   });
 
-  test('ValueNotifier dispatch', () async {
+  test('ValueNotifier process', () async {
     final objectUnderTest = ValueNotifier(0).proxy;
-    objectUnderTest.dispatch(CounterIncremented());
+    objectUnderTest.process(CounterIncremented());
     expect(objectUnderTest.state, 1);
   });
 }

@@ -16,8 +16,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
         theme: ThemeData(primarySwatch: Colors.blue),
         home: ReducedConsumer(
-          transformer: transformer,
-          builder: builder,
+          mapper: PropsMapper.new,
+          builder: MyHomePage.new,
         ),
       );
 }

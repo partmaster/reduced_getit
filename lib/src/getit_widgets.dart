@@ -54,17 +54,20 @@ class _ReducedProviderState extends State<ReducedProvider> {
 class ReducedConsumer<S, P> extends StatelessWidget with GetItMixin {
   ReducedConsumer({
     super.key,
-    required this.transformer,
+    required this.mapper,
     required this.builder,
   });
 
-  final ReducedTransformer<S, P> transformer;
-  final ReducedWidgetBuilder<P> builder;
+  final StateToPropsMapper<S, P> mapper;
+  final WidgetFromPropsBuilder<P> builder;
 
   @override
   Widget build(BuildContext context) => builder(
         props: watchOnly<ValueNotifier<S>, P>(
-          (ValueNotifier<S> notifier) => transformer(notifier.proxy),
+          (ValueNotifier<S> notifier) => mapper(
+            notifier.proxy.state,
+            notifier.proxy,
+          ),
         ),
       );
 }
