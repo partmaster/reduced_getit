@@ -1,6 +1,7 @@
 // getit_store.dart
 
 import 'package:flutter/widgets.dart';
+import 'package:reduced/proxy.dart';
 import 'package:reduced/reduced.dart';
 
 /// Extension on class [ValueNotifier] with support of the [ReducedStore] interface.
